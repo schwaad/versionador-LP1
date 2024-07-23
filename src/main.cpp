@@ -3,6 +3,6 @@
 #include "../include/utils.h"
 
 int main() {
-  createCommit();
+  menu();
   return 0;
 }
