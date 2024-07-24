@@ -13,6 +13,7 @@ void clearInputBuffer() {
 }
 
 void clearTerminal() {
+  // Utiliza comandos diferentes dependendo do sistema operacional.
 #ifdef _WIN32
   system("cls");
 #else
@@ -76,6 +77,10 @@ std::string getRepoNamefromInfos(fs::path infosPath) {
   std::string line;
   size_t lineNumber = 0;
 
+  // Percorre todo o arquivo repoInfos.txt procurando pela linha que contenha
+  // "repoNameIs:". Após isso, registra o nome do repositório, que está
+  // exatamente 11 caracteres (é o tamanho da palavra "repoNameIs:") depois do
+  // início da linha.
   while (std::getline(file, line)) {
     lineNumber++;
     if (line.find("repoNameIs:") != std::string::npos) {

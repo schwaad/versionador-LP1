@@ -26,6 +26,8 @@ class Commit {
     std::cout << "Insira a seguir o arquivo que você deseja adicionar ao "
                  "commit."
               << std::endl;
+    // Verifica se o arquivo  existe e o adiciona ao atributo commitFiles se
+    // positivo.
     try {
       std::cin >> fileName;
       if (fs::exists(fileName)) {
@@ -48,6 +50,7 @@ class Commit {
     } catch (const fs::filesystem_error& e) {
       std::cerr << "Ocorreu um Erro: " << e.what() << std::endl;
     }
+    // Itera sobre o vetor commitFiles até que encontre o arquivo
     for (int i = 0; i < size(commitFiles); i++) {
       if (commitFiles.at(i) == fileName) {
         commitFiles.erase(commitFiles.begin() + i);
@@ -57,6 +60,7 @@ class Commit {
 
   void checkCommitStatus() {
     std::cout << "Arquivos que serão inseridos no commit:" << "\n";
+    // Itera sobre o vetor commitFiles exibindo cada arquivo dentro dele,
     for (int i = 0; i < getCommitFiles().size(); i++) {
       std::cout << "  " << getCommitFiles().at(i) << "\n";
     }
