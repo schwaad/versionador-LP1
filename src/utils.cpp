@@ -1,7 +1,12 @@
 #include "../include/utils.h"
 
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <limits>
+#include <string>
+
+namespace fs = std::filesystem;
 
 void clearInputBuffer() {
   std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
@@ -43,7 +48,8 @@ int commitMenu() {
             << "Digite a opção que você deseja:" << "\n"
             << "1: Adicionar arquivos ao commit" << "\n"
             << "2: Remover arquivos do commit" << "\n"
-            << "3: Encerrar Commit" << "\n";
+            << "3: Visualizar status do commit" << "\n"
+            << "4: Encerrar Commit" << "\n";
   std::cin >> n;
   return n;
 }
@@ -51,4 +57,34 @@ int commitMenu() {
 void pauseProgram() {
   std::cout << "Insira qualquer tecla para continuar...";
   getchar();
+}
+
+bool isDirectory(const std::string& path) {
+  fs::directory_entry entry(path);
+  return entry.exists() && entry.is_directory();
+}
+
+std::string getRepoNamefromInfos(fs::path infosPath) {
+  std::string repoName;
+  std::ifstream file(infosPath);
+
+  if (!file.is_open()) {
+    std::cerr << "Erro ao abrir o arquivo: " << infosPath << "\n";
+    return "notfound";
+  }
+
+  std::string line;
+  size_t lineNumber = 0;
+
+  while (std::getline(file, line)) {
+    lineNumber++;
+    if (line.find("repoNameIs:") != std::string::npos) {
+      repoName = line.substr(line.find("repoNameIs:") + 11);
+    } else {
+      std::cout << "Ocorreu um erro: não foi possível encontrar o nome do "
+                   "repositório.";
+      return "notfound";
+    }
+  }
+  return repoName;
 }
