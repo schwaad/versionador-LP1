@@ -28,11 +28,14 @@ class Commit {
               << std::endl;
     try {
       std::cin >> fileName;
-
+      if (fs::exists(fileName)) {
+        commitFiles.push_back(fileName);
+      } else {
+        std::cout << "Ocorreu um Erro: Arquivo não encontrado." << "\n";
+      }
     } catch (const fs::filesystem_error& e) {
       std::cerr << "Ocorreu um Erro: " << e.what() << std::endl;
     }
-    commitFiles.push_back(fileName);
   }
 
   void removeFileFromCommit() {
@@ -51,8 +54,13 @@ class Commit {
       }
     }
   }
-};
 
-Commit createCommit();
+  void checkCommitStatus() {
+    std::cout << "Arquivos que serão inseridos no commit:" << "\n";
+    for (int i = 0; i < getCommitFiles().size(); i++) {
+      std::cout << "  " << getCommitFiles().at(i) << "\n";
+    }
+  }
+};
 
 #endif
