@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "../include/commit.h"
 #include "../include/utils.h"
@@ -13,12 +14,18 @@ namespace fs = std::filesystem;
 
 Repo createCommit(Repo repositorie) {
   Commit newCommit;
+  std::string dotFilePath =
+      repositorie.getRepoLocation() + "/" + ".versionadorLP1";
+  fs::path infosPath = dotFilePath + "/" + "repoInfos.txt";
   int choice;
 
   do {
     choice = commitMenu();
 
     switch (choice) {
+      case 0:
+        break;
+
       case 1:  // 1 = Adicionar arquivos ao commit
         newCommit.addFileToCommit();
         clearInputBuffer();
@@ -42,26 +49,39 @@ Repo createCommit(Repo repositorie) {
         std::string str;
         clearInputBuffer();
         std::getline(std::cin, str);
-        // Declara como string o caminho até a pasta .versionadorLP1
-        std::string dotFilePath =
-            repositorie.getRepoLocation() + "/" + ".versionadorLP1";
-        // Declara como string o nome da pasta do commit, que sempre é
-        // commit<algum número>, com base em quantos commits o repositório tem.
-        std::string commitCount =
-            std::to_string(repositorie.getRepoCommits().size() + 1);
-        std::string newCommitDir = dotFilePath + "/" + "commit" + commitCount;
+
+        std::string commitCount = getCommitCountfromInfos(infosPath);
+        if (commitCount == "notfound") {
+          std::cerr << "Erro ao obter o número de commits." << std::endl;
+          std::cout << repositorie.getRepoLocation();
+          break;
+        }
+        int newCommitCount = std::stoi(commitCount) + 1;
+        rewriteCommitCount(infosPath, std::to_string(newCommitCount));
+        std::string prevCommitDir = dotFilePath + "/" + "commit" + commitCount;
+        std::string newCommitDir =
+            dotFilePath + "/" + "commit" + std::to_string(newCommitCount);
         fs::create_directories(newCommitDir);
         // Itera pelos arquivos do commit, até que todos sejam copiados para a
         // pasta commit<número>. Copia recursivamente os arquivos se for um
         // diretório ou apenas copia o arquivo se for um arquivo simples.
+        if (commitCount != "0") {
+          fs::copy(prevCommitDir, newCommitDir, fs::copy_options::recursive);
+          fs::remove_all(".versionadorLP1");
+        }
         for (int i = 0; i < newCommit.getCommitFiles().size(); i++) {
           if (isDirectory(newCommit.getCommitFiles().at(i))) {
-            fs::copy(newCommit.getCommitFiles().at(i), newCommitDir,
+            fs::path commitToCommitDirectory =
+                newCommitDir + "/" +
+                filterDirPath(newCommit.getCommitFiles().at(i));
+            fs::path commitToMainDirectory =
+                repositorie.getRepoLocation() + "/" +
+                filterDirPath(newCommit.getCommitFiles().at(i));
+            fs::copy(newCommit.getCommitFiles().at(i), commitToCommitDirectory,
                      fs::copy_options::recursive |
                          fs::copy_options::overwrite_existing);
 
-            fs::copy(newCommit.getCommitFiles().at(i),
-                     repositorie.getRepoLocation(),
+            fs::copy(newCommit.getCommitFiles().at(i), commitToMainDirectory,
                      fs::copy_options::recursive |
                          fs::copy_options::overwrite_existing);
           } else {
@@ -76,8 +96,8 @@ Repo createCommit(Repo repositorie) {
         repositorie.addCommit(newCommit);
         break;
     }
-  } while (choice != 5);
 
+  } while (choice != 0);
   return repositorie;
 }
 
@@ -97,13 +117,16 @@ Repo createRepo() {
     std::string repoPath = directoryPath + "/" + newRepoName;
     // Registra a localização do repositório e cria o diretório .versionadorLP1
     // bem como o arquivo repoInfos.txt dentro dele.
+    newRepo.setRepoDate(getCurrentDate());
     newRepo.setRepoLocation(repoPath);
     fs::create_directories(repoPath);
     fs::create_directories(repoPath + "/" + ".versionadorLP1");
     std::ofstream outFile(repoPath + "/" + ".versionadorLP1" + "/" +
                           "repoInfos.txt");
     if (outFile.is_open()) {
-      outFile << "repoNameIs: " << newRepoName;
+      outFile << "creationdate: " << newRepo.getRepoDate() << "\n";
+      outFile << "repoNameIs: " << newRepoName << "\n";
+      outFile << "commits: 0" << "\n";
     }
     std::cout << "Repositório " << newRepoName << " criado com sucesso em "
               << repoPath << std::endl;
@@ -120,11 +143,12 @@ Repo accessRepo() {
   std::string str;
   std::cin >> str;
   fs::path repoPath = str;
-  if (fs::exists(repoPath) && fs::is_directory(repoPath)) {
+  if (isRepo(repoPath)) {
     Repo acessedRepo;
     std::string infosPath =
         str + "/" + ".versionadorLP1" + "/" + "repoInfos.txt";
     acessedRepo.setRepoName(getRepoNamefromInfos(infosPath));
+    acessedRepo.setRepoLocation(repoPath);
     std::cout << "Acessando repositório" + acessedRepo.getRepoName() + "...\n";
     return acessedRepo;
   } else {
@@ -134,4 +158,27 @@ Repo accessRepo() {
            "'.versionadorLP1' dentro deles.\n";
     return accessRepo();
   }
+}
+
+void removeRepo() {
+  std::cout << "Insira o caminho do repositório que deseja remover:\n";
+  fs::path repoPath;
+  std::cin >> repoPath;
+  if (isRepo(repoPath)) {
+    fs::remove_all(repoPath);
+    std::cout << "Repositório removido com sucesso.\n";
+  } else {
+    std::cout << "Ocorreu um erro: repositório não encontrado\n";
+  }
+}
+
+void checkRepoStatus(Repo repositorie) {
+  fs::path infosPath = repositorie.getRepoLocation() + "/" + ".versionadorLP1" +
+                       "/" + "repoInfos.txt";
+  std::cout << "Data de criação do repositório: "
+            << getCreationDatefromInfos(infosPath) << "\n"
+            << "Nome do repositório: " << getRepoNamefromInfos(infosPath)
+            << "\n"
+            << "Quantidade de commits até então: "
+            << getCommitCountfromInfos(infosPath) << "\n";
 }
