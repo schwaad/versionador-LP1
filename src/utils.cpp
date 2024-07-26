@@ -5,6 +5,9 @@
 #include <iostream>
 #include <limits>
 #include <string>
+#include <vector>
+
+#include "../include/repo.h"
 
 namespace fs = std::filesystem;
 
@@ -34,23 +37,25 @@ int menu() {
                                                                               )"
       << std::endl;
   std::cout << "Bem vindo ao Versionador LP1!\n"
-            << "Digite o comando que deseja:" << "\n"
+            << "Digite a opção que você deseja:" << "\n"
             << "1: Criar um Repositório" << "\n"
             << "2: Acessar um Repositório" << "\n"
-            << "3: Apagar um Repositório" << "\n";
+            << "3: Apagar um Repositório" << "\n"
+            << "0: Sair" << "\n";
   std::cin >> n;
   return n;
 }
 
 int commitMenu() {
-  int n;
   clearTerminal();
+  int n;
   std::cout << "Criando um novo commit..." << "\n"
             << "Digite a opção que você deseja:" << "\n"
             << "1: Adicionar arquivos ao commit" << "\n"
             << "2: Remover arquivos do commit" << "\n"
             << "3: Visualizar status do commit" << "\n"
-            << "4: Encerrar Commit" << "\n";
+            << "4: Encerrar Commit" << "\n"
+            << "0: Voltar ao menu de repositório" << "\n";
   std::cin >> n;
   return n;
 }
@@ -75,21 +80,163 @@ std::string getRepoNamefromInfos(fs::path infosPath) {
   }
 
   std::string line;
-  size_t lineNumber = 0;
 
   // Percorre todo o arquivo repoInfos.txt procurando pela linha que contenha
   // "repoNameIs:". Após isso, registra o nome do repositório, que está
   // exatamente 11 caracteres (é o tamanho da palavra "repoNameIs:") depois do
   // início da linha.
   while (std::getline(file, line)) {
-    lineNumber++;
     if (line.find("repoNameIs:") != std::string::npos) {
       repoName = line.substr(line.find("repoNameIs:") + 11);
-    } else {
-      std::cout << "Ocorreu um erro: não foi possível encontrar o nome do "
-                   "repositório.";
-      return "notfound";
+      return repoName;
     }
   }
-  return repoName;
+
+  std::cerr
+      << "Ocorreu um erro: não foi possível encontrar o nome do repositório.\n";
+  return "notfound";
+}
+
+std::string getCommitCountfromInfos(fs::path infosPath) {
+  std::string commitCount;
+  std::ifstream file(infosPath);
+
+  if (!file.is_open()) {
+    std::cerr << "Erro ao abrir o arquivo: " << infosPath << "\n";
+    return "notfound";
+  }
+
+  std::string line;
+  size_t lineNumber = 0;
+
+  // Percorre todo o arquivo repoInfos.txt procurando pela linha que contenha
+  // "commits: ". Após isso, registra o nome do repositório, que está
+  // exatamente 9 caracteres (é o tamanho da palavra "commits: ") depois do
+  // início da linha.
+  while (std::getline(file, line)) {
+    lineNumber++;
+    if (line.find("commits: ") != std::string::npos) {
+      commitCount = line.substr(line.find("commits: ") + 9);
+      return commitCount;
+      break;
+    }
+  }
+  return "notfound";
+}
+
+std::string getCreationDatefromInfos(fs::path infosPath) {
+  std::string creationDate;
+  std::ifstream file(infosPath);
+
+  if (!file.is_open()) {
+    std::cerr << "Erro ao abrir o arquivo: " << infosPath << "\n";
+    return "notfound";
+  }
+
+  std::string line;
+  size_t lineNumber = 0;
+
+  // Percorre todo o arquivo repoInfos.txt procurando pela linha que contenha
+  // "commits: ". Após isso, registra o nome do repositório, que está
+  // exatamente 9 caracteres (é o tamanho da palavra "commits: ") depois do
+  // início da linha.
+  while (std::getline(file, line)) {
+    lineNumber++;
+    if (line.find("creationdate: ") != std::string::npos) {
+      creationDate = line.substr(line.find("creationdate: ") + 14);
+      return creationDate;
+      break;
+    }
+  }
+  return "notfound";
+}
+
+void rewriteCommitCount(fs::path filename, std::string newCommitCount) {
+  std::ifstream infile(filename);
+  if (!infile) {
+    std::cerr << "Ocorreu um erro, não foi possível abrir o arquivo: "
+              << filename << std::endl;
+    return;
+  }
+
+  std::vector<std::string> lines;
+  std::string line;
+  while (std::getline(infile, line)) {
+    // Check if the line contains "commits:"
+    if (line.find("commits:") != std::string::npos) {
+      std::stringstream ss;
+      ss << "commits: " << newCommitCount;
+      line = ss.str();
+    }
+    lines.push_back(line);
+  }
+  infile.close();
+
+  std::ofstream outfile(filename);
+  if (!outfile) {
+    std::cerr << "Ocorreu um erro, não foi possível abrir o arquivo: "
+              << filename << std::endl;
+    return;
+  }
+
+  for (const auto& l : lines) {
+    outfile << l << std::endl;
+  }
+  outfile.close();
+}
+
+bool isRepo(const std::string& dirPath) {
+  if (fs::exists(dirPath + "/" + ".versionadorLP1") && isDirectory(dirPath)) {
+    return true;
+  }
+  return false;
+}
+
+void repoMenu(Repo repositorie) {
+  std::cout << "Digite a opção que deseja:\n"
+            << "1: Criar um novo Commit\n"
+            << "2: Verificar status do repositório\n"
+            << "3: Voltar para uma versão anterior\n"
+            << "0: Voltar ao menu principal\n";
+  int choice;
+  std::cin >> choice;
+  do {
+    switch (choice) {
+      case 1:
+        clearInputBuffer();
+        createCommit(repositorie);
+        clearInputBuffer();
+        std::cin >> choice;
+        break;
+      case 2:
+        clearInputBuffer();
+        checkRepoStatus(repositorie);
+        clearInputBuffer();
+        std::cin >> choice;
+        break;
+      case 3:
+        clearInputBuffer();
+        std::cout << "Ainda vai ser implementado!";
+        clearInputBuffer();
+        std::cin >> choice;
+        break;
+      case 0:
+        break;
+    }
+  } while (choice != 0);
+}
+
+std::string getCurrentDate() {
+  std::time_t now = std::time(nullptr);
+  std::tm* localTime = std::localtime(&now);
+
+  char buffer[100];
+  std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localTime);
+
+  return std::string(buffer);
+}
+
+std::string filterDirPath(const std::string& dirPath) {
+  std::size_t found = dirPath.find_last_of("/\\");
+  return dirPath.substr(found + 1);
 }
