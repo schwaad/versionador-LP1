@@ -138,8 +138,8 @@ std::string getCreationDatefromInfos(fs::path infosPath) {
 
   // Percorre todo o arquivo repoInfos.txt procurando pela linha que contenha
   // "commits: ". Após isso, registra o nome do repositório, que está
-  // exatamente 9 caracteres (é o tamanho da palavra "commits: ") depois do
-  // início da linha.
+  // exatamente 14 caracteres (é o tamanho da palavra "creationdate: ") depois
+  // do início da linha.
   while (std::getline(file, line)) {
     lineNumber++;
     if (line.find("creationdate: ") != std::string::npos) {
@@ -151,6 +151,7 @@ std::string getCreationDatefromInfos(fs::path infosPath) {
   return "notfound";
 }
 
+// Reescreve o número de commits no arquivo repoInfos.txt
 void rewriteCommitCount(fs::path filename, std::string newCommitCount) {
   std::ifstream infile(filename);
   if (!infile) {
@@ -162,7 +163,6 @@ void rewriteCommitCount(fs::path filename, std::string newCommitCount) {
   std::vector<std::string> lines;
   std::string line;
   while (std::getline(infile, line)) {
-    // Check if the line contains "commits:"
     if (line.find("commits:") != std::string::npos) {
       std::stringstream ss;
       ss << "commits: " << newCommitCount;
@@ -185,6 +185,8 @@ void rewriteCommitCount(fs::path filename, std::string newCommitCount) {
   outfile.close();
 }
 
+// Verifica se um diretório possui a pasta .versionadorLP1, se tiver, retorna
+// true.
 bool isRepo(const std::string& dirPath) {
   if (fs::exists(dirPath + "/" + ".versionadorLP1") && isDirectory(dirPath)) {
     return true;
@@ -192,6 +194,7 @@ bool isRepo(const std::string& dirPath) {
   return false;
 }
 
+// Menu exibido após escolher a opção "Acessar repositório" no menu principal
 void repoMenu(Repo repositorie) {
   std::cout << "Digite a opção que deseja:\n"
             << "1: Criar um novo Commit\n"
@@ -236,6 +239,7 @@ std::string getCurrentDate() {
   return std::string(buffer);
 }
 
+// Filtra apenas o último nome em um caminho.
 std::string filterDirPath(const std::string& dirPath) {
   std::size_t found = dirPath.find_last_of("/\\");
   return dirPath.substr(found + 1);

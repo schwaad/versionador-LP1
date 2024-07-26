@@ -50,6 +50,8 @@ Repo createCommit(Repo repositorie) {
         clearInputBuffer();
         std::getline(std::cin, str);
 
+        // Verifica o número de commits no repositório e sobrescreve adicionando
+        // +1 após o novo commit.
         std::string commitCount = getCommitCountfromInfos(infosPath);
         if (commitCount == "notfound") {
           std::cerr << "Erro ao obter o número de commits." << std::endl;
@@ -58,17 +60,22 @@ Repo createCommit(Repo repositorie) {
         }
         int newCommitCount = std::stoi(commitCount) + 1;
         rewriteCommitCount(infosPath, std::to_string(newCommitCount));
+
         std::string prevCommitDir = dotFilePath + "/" + "commit" + commitCount;
         std::string newCommitDir =
             dotFilePath + "/" + "commit" + std::to_string(newCommitCount);
         fs::create_directories(newCommitDir);
-        // Itera pelos arquivos do commit, até que todos sejam copiados para a
-        // pasta commit<número>. Copia recursivamente os arquivos se for um
-        // diretório ou apenas copia o arquivo se for um arquivo simples.
+        // Se for não for o primeiro commit do repositório, copia todos os
+        // arquivos do commit anterior, para que as atualizações que foram
+        // feitas no commit anterior sejam mantidas.
         if (commitCount != "0") {
           fs::copy(prevCommitDir, newCommitDir, fs::copy_options::recursive);
           fs::remove_all(".versionadorLP1");
         }
+        // Percorre o vetor de arquivos do commit adicionando cada arquivo á
+        // pasta do commit recém criado e à pasta principal do repositório. Se o
+        // arquivo for um diretório, cria um diretório de mesmo nome em ambas as
+        // pastas e copia todo o seu conteúdo recursivamente.
         for (int i = 0; i < newCommit.getCommitFiles().size(); i++) {
           if (isDirectory(newCommit.getCommitFiles().at(i))) {
             fs::path commitToCommitDirectory =
@@ -113,12 +120,11 @@ Repo createRepo() {
   std::cin >> directoryPath;
   if (isDirectory(directoryPath)) {
     std::cout << "Criando repositório...\n";
-    // Declara como string o caminho até o repositório que está sendo criado
     std::string repoPath = directoryPath + "/" + newRepoName;
-    // Registra a localização do repositório e cria o diretório .versionadorLP1
-    // bem como o arquivo repoInfos.txt dentro dele.
     newRepo.setRepoDate(getCurrentDate());
     newRepo.setRepoLocation(repoPath);
+    // Cria o diretório do repositório e preenche o arquivo repoInfos.txt com as
+    // informações do repositório.
     fs::create_directories(repoPath);
     fs::create_directories(repoPath + "/" + ".versionadorLP1");
     std::ofstream outFile(repoPath + "/" + ".versionadorLP1" + "/" +
