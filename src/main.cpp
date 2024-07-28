@@ -6,20 +6,15 @@ int main() {
   do {
     switch (menu()) {
       case 1:
-        clearInputBuffer();
         createRepo();
-        clearInputBuffer();
         pauseProgram();
         break;
       case 2:
-        clearInputBuffer();
         repoMenu(accessRepo());
         clearInputBuffer();
         break;
       case 3:
-        clearInputBuffer();
         removeRepo();
-        clearInputBuffer();
         pauseProgram();
         break;
       case 0:
