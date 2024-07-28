@@ -60,9 +60,45 @@ int commitMenu() {
   return n;
 }
 
+// Menu exibido após escolher a opção "Acessar repositório" no menu principal
+void repoMenu(Repo repositorie) {
+  int choice;
+  do {
+    clearTerminal();
+    std::cout << "Digite a opção que deseja:\n"
+              << "1: Criar um novo Commit\n"
+              << "2: Verificar status do repositório\n"
+              << "3: Voltar para uma versão anterior\n"
+              << "0: Voltar ao menu principal\n";
+    std::cin >> choice;
+
+    switch (choice) {
+      case 1:
+        createCommit(repositorie);
+        pauseProgram();
+        break;
+      case 2:
+        checkRepoStatus(repositorie);
+        pauseProgram();
+        break;
+      case 3:
+        std::cout << "Ainda vai ser implementado!";
+        pauseProgram();
+        break;
+      case 0:
+        break;
+      default:
+        std::cout << "Opção inválida, tente novamente.\n";
+        pauseProgram();
+        break;
+    }
+  } while (choice != 0);
+}
+
 void pauseProgram() {
   std::cout << "Insira qualquer tecla para continuar...";
   getchar();
+  clearInputBuffer();
 }
 
 bool isDirectory(const std::string& path) {
@@ -194,41 +230,6 @@ bool isRepo(const std::string& dirPath) {
   return false;
 }
 
-// Menu exibido após escolher a opção "Acessar repositório" no menu principal
-void repoMenu(Repo repositorie) {
-  std::cout << "Digite a opção que deseja:\n"
-            << "1: Criar um novo Commit\n"
-            << "2: Verificar status do repositório\n"
-            << "3: Voltar para uma versão anterior\n"
-            << "0: Voltar ao menu principal\n";
-  int choice;
-  std::cin >> choice;
-  do {
-    switch (choice) {
-      case 1:
-        clearInputBuffer();
-        createCommit(repositorie);
-        clearInputBuffer();
-        std::cin >> choice;
-        break;
-      case 2:
-        clearInputBuffer();
-        checkRepoStatus(repositorie);
-        clearInputBuffer();
-        std::cin >> choice;
-        break;
-      case 3:
-        clearInputBuffer();
-        std::cout << "Ainda vai ser implementado!";
-        clearInputBuffer();
-        std::cin >> choice;
-        break;
-      case 0:
-        break;
-    }
-  } while (choice != 0);
-}
-
 std::string getCurrentDate() {
   std::time_t now = std::time(nullptr);
   std::tm* localTime = std::localtime(&now);
@@ -243,4 +244,35 @@ std::string getCurrentDate() {
 std::string filterDirPath(const std::string& dirPath) {
   std::size_t found = dirPath.find_last_of("/\\");
   return dirPath.substr(found + 1);
+}
+
+void readCommitInfos(const std::string& commitInfosPath) {
+  std::ifstream commitInfosFile(commitInfosPath);
+  if (!commitInfosFile.is_open()) {
+    std::cerr << "Erro ao abrir o arquivo: " << commitInfosPath << "\n";
+    return;
+  }
+
+  std::string line;
+  std::string commitMessage;
+  std::vector<std::string> commitFiles;
+  bool readingFiles = false;
+
+  while (std::getline(commitInfosFile, line)) {
+    if (line.rfind("commitMessage:", 0) == 0) {
+      commitMessage = line.substr(14);
+    } else if (line == "commitedFiles:") {
+      readingFiles = true;
+    } else if (readingFiles) {
+      commitFiles.push_back(line);
+    }
+  }
+
+  commitInfosFile.close();
+
+  std::cout << "Mensagem do commit: " << commitMessage << "\n";
+  std::cout << "Arquivos commitados:\n";
+  for (const auto& file : commitFiles) {
+    std::cout << file << "\n";
+  }
 }

@@ -22,4 +22,5 @@ bool isRepo(const std::string& dirPath);
 void repoMenu(Repo repositorie);
 std::string getCurrentDate();
 std::string filterDirPath(const std::string& dirPath);
+void readCommitInfos(const std::string& commitInfosPath);
 #endif
