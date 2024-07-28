@@ -24,23 +24,21 @@ Repo createCommit(Repo repositorie) {
 
     switch (choice) {
       case 0:
+        repoMenu(repositorie);
         break;
 
       case 1:  // 1 = Adicionar arquivos ao commit
         newCommit.addFileToCommit();
-        clearInputBuffer();
         pauseProgram();
         break;
 
       case 2:  // 2 = Remover arquivos do commit
         newCommit.removeFileFromCommit();
-        clearInputBuffer();
         pauseProgram();
         break;
 
       case 3:  // 3 = Verificar status do commit
         newCommit.checkCommitStatus();
-        clearInputBuffer();
         pauseProgram();
         break;
 
@@ -100,7 +98,23 @@ Repo createCommit(Repo repositorie) {
           }
         }
         newCommit.setCommitMessage(str);
+        std::string commitDotFileDir = newCommitDir + "/.commit";
+        fs::create_directories(commitDotFileDir);
+        std::ofstream commitInfosFile(commitDotFileDir + "/commitInfos.txt");
+        if (commitInfosFile.is_open()) {
+          commitInfosFile << "commitMessage: " << newCommit.getCommitMessage()
+                          << "\n";
+          commitInfosFile << "commitedFiles:";
+          for (int i = 0; i < newCommit.getCommitFiles().size(); i++) {
+            commitInfosFile << "\n" << newCommit.getCommitFiles().at(i);
+          }
+          commitInfosFile.close();
+        } else {
+          std::cerr << "Ocorreu um erro: não foi possível abrir o arquivo "
+                    << newCommitDir << "/commitInfos.txt";
+        }
         repositorie.addCommit(newCommit);
+        newCommit.getCommitFiles().clear();
         break;
     }
 
