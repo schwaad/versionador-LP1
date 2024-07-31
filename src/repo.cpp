@@ -105,7 +105,7 @@ Repo createCommit(Repo repositorie) {
         if (commitInfosFile.is_open()) {
           commitInfosFile << "commitMessage: " << newCommit.getCommitMessage()
                           << "\n";
-          commitInfosFile << "commitedFiles:";
+          commitInfosFile << "commitedFiles:\n";
 
           try {
             for (const auto& entry :
@@ -117,7 +117,8 @@ Repo createCommit(Repo repositorie) {
                        fs::directory_iterator(entry.path())) {
                     if (subEntry.path().filename() !=
                         repositorie.getRepoLocation() + "/.versionadorLP1") {
-                      if (subEntry.is_regular_file()) {
+                      if (subEntry.is_regular_file() &&
+                          subEntry.path().filename() != "repoInfos.txt") {
                         commitInfosFile << subEntry.path().filename().string()
                                         << "\n";
                       }
@@ -231,6 +232,29 @@ void changeRepoVersion(const std::string& repoPath) {
   std::string versionadorPath = repoPath + "/.versionadorLP1";
   std::regex pattern("commit\\d+");
 
+  std::vector<std::string> commitDirs;
+  for (const auto& entry : fs::directory_iterator(versionadorPath)) {
+    if (fs::is_directory(entry.path())) {
+      std::string dirName = entry.path().filename().string();
+
+      // Verifica se o nome do diretório começa com "commit" e segue com um
+      // número
+      if (dirName.rfind("commit", 0) == 0 && dirName.size() > 6) {
+        std::string commitDir = entry.path().string();
+        std::string commitDotDir = commitDir + "/.commit";
+        std::string commitInfoFilePath = commitDotDir + "/commitInfos.txt";
+
+        if (fs::exists(commitInfoFilePath)) {
+          std::cout << "\nCommit Directory: " << commitDir << "\n";
+          listCommitInfo(commitInfoFilePath);
+          commitDirs.push_back(commitDir);
+        } else {
+          std::cerr << "Erro: o arquivo commitInfos.txt não existe em "
+                    << commitDotDir << "\n";
+        }
+      }
+    }
+  }
   std::cout << "Digite o número do commit: ";
   std::string commitNumber;
   std::cin >> commitNumber;
