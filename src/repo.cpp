@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <regex>
 #include <string>
 #include <vector>
 
@@ -105,8 +106,31 @@ Repo createCommit(Repo repositorie) {
           commitInfosFile << "commitMessage: " << newCommit.getCommitMessage()
                           << "\n";
           commitInfosFile << "commitedFiles:";
-          for (int i = 0; i < newCommit.getCommitFiles().size(); i++) {
-            commitInfosFile << "\n" << newCommit.getCommitFiles().at(i);
+
+          try {
+            for (const auto& entry :
+                 fs::directory_iterator(repositorie.getRepoLocation())) {
+              if (entry.path().filename() !=
+                  repositorie.getRepoLocation() + "/.versionadorLP1") {
+                if (entry.is_directory()) {
+                  for (const auto& subEntry :
+                       fs::directory_iterator(entry.path())) {
+                    if (subEntry.path().filename() !=
+                        repositorie.getRepoLocation() + "/.versionadorLP1") {
+                      if (subEntry.is_regular_file()) {
+                        commitInfosFile << subEntry.path().filename().string()
+                                        << "\n";
+                      }
+                    }
+                  }
+                } else if (entry.is_regular_file()) {
+                  commitInfosFile << entry.path().filename().string() << "\n";
+                }
+              }
+            }
+
+          } catch (const fs::filesystem_error& err) {
+            std::cerr << "Erro: " << err.what() << std::endl;
           }
           commitInfosFile.close();
         } else {
@@ -201,4 +225,69 @@ void checkRepoStatus(Repo repositorie) {
             << "\n"
             << "Quantidade de commits até então: "
             << getCommitCountfromInfos(infosPath) << "\n";
+}
+
+void changeRepoVersion(const std::string& repoPath) {
+  std::string versionadorPath = repoPath + "/.versionadorLP1";
+  std::regex pattern("commit\\d+");
+
+  std::cout << "Digite o número do commit: ";
+  std::string commitNumber;
+  std::cin >> commitNumber;
+
+  std::string commitFolderName = "commit" + commitNumber;
+
+  try {
+    fs::path commitPath;
+    bool commitFound = false;
+
+    for (const auto& entry : fs::directory_iterator(versionadorPath)) {
+      if (entry.is_directory() && entry.path().filename() == commitFolderName) {
+        commitPath = entry.path();
+        commitFound = true;
+        break;
+      }
+    }
+
+    if (commitFound) {
+      std::cout << "Commit encontrado: " << commitFolderName << std::endl;
+
+      // Procurar dentro da pasta encontrada
+      fs::path subDirPath = commitPath / ".commit";
+      if (fs::exists(subDirPath) && fs::is_directory(subDirPath)) {
+        std::cout << "   Subpasta .commit encontrada em: "
+                  << subDirPath.string() << std::endl;
+
+        // Procurar pelo arquivo commitInfos.txt
+        fs::path commitInfoPath = subDirPath / "commitInfos.txt";
+        if (fs::exists(commitInfoPath) && fs::is_regular_file(commitInfoPath)) {
+          std::cout << "   Arquivo commitInfos.txt encontrado em: "
+                    << commitInfoPath.string() << std::endl;
+
+          std::vector<std::string> committedFiles;
+          processCommitInfo(commitInfoPath, committedFiles);
+
+          // Limpar o diretório do repositório
+          clearDirectory(repoPath);
+
+          // Copiar os arquivos do commit para o repositório
+          copyFiles(commitPath, repoPath, committedFiles);
+
+          std::cout << "Arquivos do commit " << commitNumber
+                    << " restaurados para " << repoPath << std::endl;
+        } else {
+          std::cout << "   Arquivo commitInfos.txt não encontrado em: "
+                    << subDirPath.string() << std::endl;
+        }
+      } else {
+        std::cout << "   Subpasta .commit não encontrada em: "
+                  << commitFolderName << std::endl;
+      }
+    } else {
+      std::cout << "Commit " << commitFolderName << " não encontrado."
+                << std::endl;
+    }
+  } catch (const fs::filesystem_error& err) {
+    std::cerr << "Erro: " << err.what() << std::endl;
+  }
 }
