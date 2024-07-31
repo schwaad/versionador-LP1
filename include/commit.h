@@ -1,6 +1,7 @@
 #include <ctime>
 #include <filesystem>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #ifndef _COMMITH_
@@ -22,7 +23,7 @@ class Commit {
   void setCreationDate(std::time_t date) { creationDate = date; }
 
   void addFileToCommit() {
-    fs::path fileName;
+    std::string fileName;
     std::cout << "Insira a seguir o arquivo que você deseja adicionar ao "
                  "commit."
               << std::endl;
@@ -41,12 +42,11 @@ class Commit {
   }
 
   void removeFileFromCommit() {
-    fs::path fileName;
+    std::string fileName;
     std::cout << "Digite o nome do arquivo que você deseja remover do Commit"
               << std::endl;
     try {
       std::cin >> fileName;
-
     } catch (const fs::filesystem_error& e) {
       std::cerr << "Ocorreu um Erro: " << e.what() << std::endl;
     }
