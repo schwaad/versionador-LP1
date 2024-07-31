@@ -82,7 +82,7 @@ void repoMenu(Repo repositorie) {
         pauseProgram();
         break;
       case 3:
-        std::cout << "Ainda vai ser implementado!";
+        changeRepoVersion(repositorie.getRepoLocation());
         pauseProgram();
         break;
       case 0:
@@ -246,33 +246,41 @@ std::string filterDirPath(const std::string& dirPath) {
   return dirPath.substr(found + 1);
 }
 
-void readCommitInfos(const std::string& commitInfosPath) {
-  std::ifstream commitInfosFile(commitInfosPath);
-  if (!commitInfosFile.is_open()) {
-    std::cerr << "Erro ao abrir o arquivo: " << commitInfosPath << "\n";
+void processCommitInfo(const fs::path& commitInfoPath,
+                       std::vector<std::string>& committedFiles) {
+  std::ifstream file(commitInfoPath);
+  if (!file.is_open()) {
+    std::cerr << "Erro ao abrir o arquivo: " << commitInfoPath << std::endl;
     return;
   }
 
   std::string line;
-  std::string commitMessage;
-  std::vector<std::string> commitFiles;
-  bool readingFiles = false;
-
-  while (std::getline(commitInfosFile, line)) {
-    if (line.rfind("commitMessage:", 0) == 0) {
-      commitMessage = line.substr(14);
-    } else if (line == "commitedFiles:") {
-      readingFiles = true;
-    } else if (readingFiles) {
-      commitFiles.push_back(line);
+  while (std::getline(file, line)) {
+    if (line.find("commitedFiles:") == 0) {
+      while (std::getline(file, line) && !line.empty()) {
+        committedFiles.push_back(line);
+      }
     }
   }
 
-  commitInfosFile.close();
+  file.close();
+}
 
-  std::cout << "Mensagem do commit: " << commitMessage << "\n";
-  std::cout << "Arquivos commitados:\n";
-  for (const auto& file : commitFiles) {
-    std::cout << file << "\n";
+void clearDirectory(const fs::path& path) {
+  for (const auto& entry : fs::directory_iterator(path)) {
+    if (entry.path().filename() != ".versionadorLP1") {
+      fs::remove_all(entry);
+    }
+  }
+}
+
+void copyFiles(const fs::path& srcDir, const fs::path& destDir,
+               const std::vector<std::string>& files) {
+  for (const auto& file : files) {
+    fs::path srcFilePath = srcDir / file;
+    fs::path destFilePath = destDir / file;
+    fs::create_directories(destFilePath.parent_path());
+    fs::copy_file(srcFilePath, destFilePath,
+                  fs::copy_options::overwrite_existing);
   }
 }
