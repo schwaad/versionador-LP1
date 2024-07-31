@@ -32,5 +32,6 @@ Repo createRepo();
 Repo accessRepo();
 void removeRepo();
 void checkRepoStatus(Repo repositorie);
+void changeRepoVersion(const std::string& repoDir);
 
 #endif
