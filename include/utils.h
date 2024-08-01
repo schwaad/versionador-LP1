@@ -24,10 +24,6 @@ std::string getCurrentDate();
 std::string filterDirPath(const std::string& dirPath);
 void readCommitInfos(const std::string& commitInfosPath);
 void remove_all_except(const fs::path& dir, const std::string& exception);
-void listCommitInfo(const std::string& commitInfoFilePath);
-void processCommitInfo(const fs::path& commitInfoPath,
-                       std::vector<std::string>& committedFiles);
-
 void clearDirectory(const fs::path& path);
 
 void copyFiles(const fs::path& srcDir, const fs::path& destDir,

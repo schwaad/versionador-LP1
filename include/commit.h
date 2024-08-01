@@ -67,4 +67,8 @@ class Commit {
   }
 };
 
+void processCommitInfo(const fs::path& commitInfoPath,
+                       std::vector<std::string>& committedFiles);
+void listCommitInfo(const std::string& commitInfoFilePath);
+
 #endif
